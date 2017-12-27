@@ -1,0 +1,136 @@
+# File: stepper.py
+# Author: Griffin Bonner
+# Date: 12/24/2017
+# Description: script to drive 28BJY-48 stepper motor at varying speeds
+
+
+# Import libraries
+import sys
+import time
+import RPi.GPIO as GPIO
+
+# Use BCM GPIO references in place of physical pin numbers
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+
+
+# Define PWM pins
+stepPins = [17, 22, 23, 24]
+
+# Define pulse sequence
+fullStep = [[1,0,0,1],
+            [1,0,0,0],
+            [1,1,0,0],
+            [0,1,0,0],
+            [0,1,1,0],
+            [0,0,1,0],
+            [0,0,1,1],
+            [0,0,0,1]]
+
+halfStep = [[1,0,0,0],
+            [0,1,0,0],
+            [0,0,1,0],
+            [0,0,0,1]]
+
+# Function: contStep() countinously full/half-step motor
+#                      at chosen speed
+# Inputs:   stepSeq; sequence of pulses
+#           delay; delay between pulses in milliseconds
+#           length; time to run motor
+def contStep(stepSeq, delay, motorDir):
+
+    # Initialize counting variables
+    stepCounter = 0
+    stepCount = len(stepSeq)
+
+    if motorDir < 0:
+	direction = "Counter-clockwise"
+    elif motorDir > 0:
+        direction = "Clockwise"
+
+    print("[Starting Motor] Mode: Continuous | Direction:", direction, "| Delay:", delay, "ms")
+
+    delay = delay / 1000
+
+    while True:
+
+	for pin in range(len(stepPins)):
+
+            xpin = stepPins[pin]
+            if stepSeq[stepCounter][pin] != 0:
+
+                GPIO.output(xpin, 1)
+
+            else:
+            
+                GPIO.output(xpin, 0)
+
+        stepCounter += motorDir
+
+        if stepCounter >= stepCount:
+            stepCounter = 0
+
+        elif stepCounter < 0:
+            stepCounter = stepCount + motorDir
+
+
+        time.sleep(delay)
+
+
+
+# Function: fixedStep() recursive function to full/half-step
+#                       motor a fixed number of steps at a desired
+#                       speed / direction
+# Inputs:   stepSeq; sequence of pulses
+#           delay; delay between pulses in milliseconds
+#
+def fixedStep(stepSeq, delay, motorDir, curStep, stopStep):
+
+
+def main():
+
+    print("\n28BYJ48-12-300-1 Stepper Motor Control Script\n")
+    print("Using RPi GPIO pins:", end = " ")
+
+
+    # Set GPIO pins as output, initialize output off
+    for pin in stepPins:
+
+        GPIO.setup(pin, GPIO.OUT)
+        GPIO.output(pin, False)
+
+    # Display GPIO pins
+    for i in range(len(stepPins)):
+        print(stepPins[i], end = " ")
+    print("\n")
+
+
+    # Get step-type from user
+    print("\nChoose step mode")
+    pulseType = int(input("Enter [1] for full-step or Enter [2] for half-step: "))
+
+    if pulseType == 1:
+        stepSeq = fullStep
+
+    elif pulseType == 2:
+        stepSeq = halfStep
+
+
+    # Prompt user for motor direction
+    print("\nChoose motor direction")
+    motorDir = int(input("Enter [1] for clockwise or Enter [2] for counter-clockwise: "))
+
+    if motorDir == 1:
+        motorDir = 1
+
+    elif motorDir == 2:
+        motorDir = -1
+
+    # Prompt user for delay
+    delay = int(input("\nEnter delay in milliseconds: "))
+
+    contStep(stepSeq, delay, motorDir)
+
+main()
+
+
